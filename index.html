@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>API Security & BOLA Defense Framework</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- Top Header Navigation -->
+  <header class="app-header">
+    <div class="header-container">
+      <div class="logo-area">
+        <span class="logo-icon">🛡️</span>
+        <span class="logo-text">API Sec Framework <small>BOLA Edition</small></span>
+      </div>
+      <nav class="nav-links">
+        <button class="nav-btn active" onclick="switchTab('overview')">Overview & Metrics</button>
+        <button class="nav-btn" onclick="switchTab('audit-logs')">Security Audits</button>
+        <button class="nav-btn" onclick="switchTab('remediation')">Fix & Remediation</button>
+        <button class="nav-btn" onclick="switchTab('pipeline')">CI/CD Pipeline</button>
+      </nav>
+      <button class="primary-btn" onclick="runSimulatedAudit()">▶ Run Security Audit</button>
+    </div>
+  </header>
+
+  <!-- Main Content Container -->
+  <main class="main-container">
+
+    <!-- Section 1: Overview Dashboard -->
+    <section id="tab-overview" class="tab-content active">
+      <div class="welcome-banner">
+        <h2>Broken Object Level Authorization (BOLA) Security Dashboard</h2>
+        <p>Monitor authorization boundary checks across multi-tenant API endpoints in real-time.</p>
+      </div>
+
+      <!-- Stat Cards Grid -->
+      <div class="metrics-grid">
+        <div class="card metric-card">
+          <span class="metric-title">Endpoints Audited</span>
+          <span class="metric-value" id="stat-endpoints">24</span>
+          <span class="metric-sub text-muted">Across 4 microservices</span>
+        </div>
+        <div class="card metric-card">
+          <span class="metric-title">Authorization Checks</span>
+          <span class="metric-value text-success" id="stat-passed">22 Passed</span>
+          <span class="metric-sub text-success">91.6% Compliance</span>
+        </div>
+        <div class="card metric-card">
+          <span class="metric-title">BOLA Flaws Detected</span>
+          <span class="metric-value text-danger" id="stat-failed">2 Active</span>
+          <span class="metric-sub text-danger">Action required</span>
+        </div>
+        <div class="card metric-card">
+          <span class="metric-title">OWASP API Security Risk</span>
+          <span class="metric-value text-warning">API1:2023</span>
+          <span class="metric-sub text-muted">Top Priority Vector</span>
+        </div>
+      </div>
+
+      <!-- Quick Summary Table -->
+      <div class="card margin-top">
+        <div class="card-header">
+          <h3>Priority Vulnerability Findings</h3>
+        </div>
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Endpoint</th>
+                <th>HTTP Method</th>
+                <th>Authorization Gate</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="findings-summary-body">
+              <!-- Dynamically populated via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 2: Audit Logs -->
+    <section id="tab-audit-logs" class="tab-content">
+      <div class="card">
+        <div class="card-header flex-between">
+          <h3>Automated Security Test Logs</h3>
+          <div class="filter-controls">
+            <button class="filter-btn active" onclick="filterLogs('all')">All</button>
+            <button class="filter-btn" onclick="filterLogs('FAIL')">BOLA Flaws</button>
+            <button class="filter-btn" onclick="filterLogs('PASS')">Passed</button>
+          </div>
+        </div>
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Test ID</th>
+                <th>Target URI</th>
+                <th>Simulated Role</th>
+                <th>Access Attempted</th>
+                <th>Result</th>
+              </tr>
+            </thead>
+            <tbody id="full-audit-body">
+              <!-- Dynamically populated via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 3: Remediation & Code Diff -->
+    <section id="tab-remediation" class="tab-content">
+      <div class="card">
+        <div class="card-header">
+          <h3>BOLA Code Remediation Guide</h3>
+          <p class="text-muted">Comparing insecure multi-tenant API routes against secure authorization validation patterns.</p>
+        </div>
+        <div class="code-compare-grid">
+          <div class="code-block insecure">
+            <div class="code-title">❌ Vulnerable Implementation (BOLA Flaw)</div>
+            <pre><code>// Insecure Route
+app.get('/api/v1/documents/:id', async (req, res) => {
+  // ⚠️ Flaw: Fetches object directly by ID without 
+  // verifying if document.ownerId matches req.user.id
+  const doc = await Document.findById(req.params.id);
+  
+  if (!doc) return res.status(404).send('Not Found');
+  
+  // Cross-tenant data leaks to unauthorized users!
+  return res.json(doc);
+});</code></pre>
+          </div>
+
+          <div class="code-block secure">
+            <div class="code-title">✅ Secure Implementation (Object Level Check)</div>
+            <pre><code>// Secure Route
+app.get('/api/v1/documents/:id', async (req, res) => {
+  const doc = await Document.findById(req.params.id);
+  
+  if (!doc) return res.status(404).send('Not Found');
+  
+  // ✅ Enforce Object-Level Access Control (ABAC)
+  if (doc.ownerId !== req.user.id && req.user.role !== 'admin') {
+    return res.status(403).json({ 
+      error: 'Access denied: Unauthorized tenant access' 
+    });
+  }
+  
+  return res.json(doc);
+});</code></pre>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 4: CI/CD Pipeline Info -->
+    <section id="tab-pipeline" class="tab-content">
+      <div class="card">
+        <div class="card-header">
+          <h3>GitHub Actions & DevSecOps Configuration</h3>
+          <p class="text-muted">Automated execution of Postman / Newman collections within continuous integration pipelines.</p>
+        </div>
+        <div class="code-block">
+          <div class="code-title">📄 .github/workflows/bola-security-scan.yml</div>
+          <pre><code>name: API Security BOLA Scan Workflow
+
+on: [push, pull_request]
+
+jobs:
+  security-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code Repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js Runtime
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Install Newman CLI
+        run: npm install -g newman newman-reporter-htmlextra
+
+      - name: Execute Automated Authorization Checks
+        run: |
+          newman run tests/BOLA_Tests.postman_collection.json \
+            -e tests/env.json \
+            -r cli,htmlextra --reporter-htmlextra-export reports/bola-report.html
+
+      - name: Upload Audit Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: bola-compliance-report
+          path: reports/</code></pre>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
